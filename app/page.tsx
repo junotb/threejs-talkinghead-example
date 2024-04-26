@@ -1,34 +1,37 @@
 'use client';
 
 // Import necessary libraries
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 export default function Home() {
-  useEffect(() => {
-    // Create a scene
-    const scene = new THREE.Scene();
-    
-    // Create a camera
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-    
-    // Create a renderer
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    
+  const [scene, setScene] = useState<THREE.Scene | null>(null);
+  const [camera, setCamera] = useState<THREE.PerspectiveCamera | null>(null);
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
+  const divRef = useRef<HTMLDivElement>(null);
+
+  const loadModel = () => {
+    console.log('loadModel');
+
     // Load the 3D model
     const loader = new FBXLoader();
     loader.load('/models/Dobby.fbx', (object) => {
+      console.log('FBXLoader');
+
       // Add the model to the scene
+      if (!scene) {
+        return;
+      }
       scene.add(object);
+
+      console.log(object);
     
       // Get the head mesh
-      const headMesh = object.getObjectByName('Head');
-    
+      const headMesh = object.getObjectByName('');
+      
+      /*
       // Create a map of viseme shapes
       const visemeShapes = {
         'A': { // Viseme for 'A' sound
@@ -57,19 +60,57 @@ export default function Home() {
     
       // Animate the talking-head
       function animate() {
+        if (!scene || !camera || !renderer) {
+          return;
+        }
+
         requestAnimationFrame(animate);
     
         // Update the viseme based on the audio or other input
-        updateViseme('A'); // Example viseme
+        // updateViseme('A'); // Example viseme
     
         renderer.render(scene, camera);
       }
     
       //animate();
+      */
     });
+  }
+
+  useEffect(() => {
+    if (!scene || !camera || !divRef || !renderer) {
+      return;
+    }
+    if (!divRef.current) {
+      return;
+    }
+    divRef.current.appendChild(renderer.domElement);
+  }, [scene, camera, renderer, divRef]);
+
+  useEffect(() => {
+    // Create a scene
+    const newScene = new THREE.Scene();
+    setScene(newScene);
+    
+    // Create a camera
+    const newCamera = new THREE.PerspectiveCamera(75, 320 / 320, 0.1, 1000);
+    newCamera.position.z = 5;
+    setCamera(newCamera);
+    
+    // Create a renderer
+    const newRenderer = new THREE.WebGLRenderer();
+    newRenderer.setSize(320, 320);
+    setRenderer(newRenderer);
   }, [])
   
   return (
-    <p>Home</p>
+    <div className='flex flex-col justify-center items-center w-full h-full'>
+      <h1>Talking Head</h1>
+      <button onClick={loadModel}>Load</button>
+      <div
+        ref={divRef}
+        className='border w-80 h-80'
+      ></div>
+    </div>
   );
 }
